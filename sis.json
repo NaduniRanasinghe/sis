@@ -1,0 +1,83 @@
+{
+  "id": "/hrm-moe/letsencrypt-dcos",
+  "backoffFactor": 1.15,
+  "backoffSeconds": 5,
+  "container": {
+    "portMappings": [
+      {
+        "containerPort": 80,
+        "hostPort": 0,
+        "protocol": "tcp",
+        "servicePort": 10000
+      }
+    ],
+    "type": "DOCKER",
+    "volumes": [
+      {
+        "containerPath": "/etc/letsencrypt",
+        "hostPath": "data",
+        "mode": "RW"
+      },
+      {
+        "persistent": {
+          "type": "root",
+          "size": 500,
+          "constraints": []
+        },
+        "mode": "RW",
+        "containerPath": "data"
+      }
+    ],
+    "docker": {
+      "image": "mesosphere/letsencrypt-dcos:v1.0.3",
+      "forcePullImage": false,
+      "privileged": false,
+      "parameters": []
+    }
+  },
+  "cpus": 0.05,
+  "disk": 0,
+  "env": {
+    "LETSENCRYPT_EMAIL": "nsis.moe@gmail.com",
+    "MARATHON_LB_ID": "marathon-lb",
+    "MARATHON_URL": "http://mesop.lgc.gov.lk:8080"
+  },
+  "instances": 1,
+  "labels": {
+    "HAPROXY_GROUP": "external",
+    "HAPROXY_0_VHOST": "demo.sis.moe.gov.lk,sis.moe.gov.lk",
+    "HAPROXY_0_PATH": "/.well-known/acme-challenge"
+  },
+  "maxLaunchDelaySeconds": 3600,
+  "mem": 512,
+  "gpus": 0,
+  "networks": [
+    {
+      "mode": "container/bridge"
+    }
+  ],
+  "residency": {
+    "relaunchEscalationTimeoutSeconds": 3600,
+    "taskLostBehavior": "WAIT_FOREVER"
+  },
+  "requirePorts": false,
+  "upgradeStrategy": {
+    "maximumOverCapacity": 0,
+    "minimumHealthCapacity": 0.5
+  },
+  "killSelection": "YOUNGEST_FIRST",
+  "unreachableStrategy": "disabled",
+  "healthChecks": [
+    {
+      "gracePeriodSeconds": 300,
+      "intervalSeconds": 60,
+      "maxConsecutiveFailures": 3,
+      "portIndex": 0,
+      "timeoutSeconds": 20,
+      "delaySeconds": 15,
+      "protocol": "TCP"
+    }
+  ],
+  "fetch": [],
+  "constraints": []
+}

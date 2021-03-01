@@ -1,0 +1,109 @@
+version: '2.3'
+services:
+  # https-portal:
+  #   image: steveltn/https-portal:1
+  #   ports:
+  #     - '80:80'
+  #     - '443:443'
+  #   environment:
+  #     STAGE: local
+  #     DOMAINS: 'sis.moe.gov.com -> http://openemis-nginx:80' # saml.moe.gov.com -> http://saml-moe:443, apim.moe.gov.com -> http://api-manager:9443
+  openemis-mailhog:
+    image: phpdockerio/mailhog:latest
+    container_name: openemis-mailhog-2
+    ports:
+      - "8125:8025"
+  openemis-mysql:
+    build: ./mysql
+    environment:
+      MYSQL_ROOT_PASSWORD: secret
+      MYSQL_DATABASE: openemis
+      MYSQL_USER: openeuser
+      MYSQL_PASSWORD: openepass
+    command:  '--sql_mode=NO_ZERO_IN_DATE,NO_ZERO_DATE,ERROR_FOR_DIVISION_BY_ZERO,NO_AUTO_CREATE_USER,NO_ENGINE_SUBSTITUTION --max_allowed_packet=32505856'
+    ports:
+      - "8106:3306"
+    restart: always
+  openemis-nginx:
+    build: ./nginx
+    container_name: openemis-nginx-2
+    ports:
+    - "8180:80"
+    restart: always
+  openemis-php-fpm-5:
+    build: ./php-fpm
+    volumes:
+       - ./php-fpm/app:/var/www/myapp
+       - ./php-fpm/php-ini-overrides.ini:/etc/php/7.1/fpm/conf.d/99-overrides.ini
+    container_name: openemis-php-fpm-5
+    links:
+      - openemis-mailhog
+      - openemis-mysql
+  openemis-php-fpm-1:
+    build: ./php-fpm
+    volumes:
+       - ./php-fpm/app:/var/www/myapp
+       - ./php-fpm/php-ini-overrides.ini:/etc/php/7.1/fpm/conf.d/99-overrides.ini
+    container_name: openemis-php-fpm-1
+    links:
+      - openemis-mailhog
+      - openemis-mysql
+    restart: always
+  penemis-php-fpm-2:
+    build: ./php-fpm
+    volumes:
+       - ./php-fpm/app:/var/www/myapp
+       - ./php-fpm/php-ini-overrides.ini:/etc/php/7.1/fpm/conf.d/99-overrides.ini
+    container_name: openemis-php-fpm-2
+    links:
+      - openemis-mailhog
+      - openemis-mysql
+  openemis-php-fpm-3:
+    build: ./php-fpm
+    volumes:
+       - ./php-fpm/app:/var/www/myapp
+       - ./php-fpm/php-ini-overrides.ini:/etc/php/7.1/fpm/conf.d/99-overrides.ini
+    container_name: openemis-php-fpm-3
+    links:
+      - openemis-mailhog
+      - openemis-mysql
+  openemis-php-fpm-4:
+    build: ./php-fpm
+    volumes:
+       - ./php-fpm/app:/var/www/myapp
+       - ./php-fpm/php-ini-overrides.ini:/etc/php/7.1/fpm/conf.d/99-overrides.ini
+    container_name: openemis-php-fpm-4
+    links:
+      - openemis-mailhog
+      - openemis-mysql    
+  cadvisor:
+    image: google/cadvisor:latest
+    volumes:
+       - /:/rootfs
+       - /var/run:/var/run
+       - /sys:/sys
+       - /var/lib/docker:/var/lib/docker
+    container_name: influxdb
+    links:
+      - influxdb
+    ports:
+      - "8080:8080"
+    command: -storage_driver=influxdb -storage_driver_db=ca -storage_driver_host=influxdb:8084 -storage_driver_secure=True -storage_driver_password=influxdb4ever
+  influxdb:
+    image: influxdb:latest
+    environment:
+      INFLUXDB_RETENTION_ENABLED: "true"
+      INFLUXDB_RETENTION_CHECK_INTERVAL: 30m0s
+      INFLUXDB_MONITOR_STORE_DATABASE: _internal
+    ports:
+      - "8084:8084"
+      - "8083:8083"
+      - "8086:8086"
+    expose:
+      - "8090"
+      - "8099"
+  grafana:
+    image: grafana/grafana
+    ports:
+      - "3000:3000"
+    
